@@ -1,77 +1,32 @@
-import { Character } from "/js/char/character.js";
+import { TextRenderer } from "/js/draw/text_renderer.js";
 
 let textSize = 25;
 let text = [
-    "Thomas Jefferson has asked *Meriwether Lewis* to lead an expedition through the new land of Louisiana. You, _William Clark_, have been asked to accompany him."
+    "Thomas Jefferson has asked *Meriwether Lewis* to lead an expedition through the new land of Louisiana.\n\nYou, _William Clark_, have been asked to accompany him.",
+    "On May 14, 1804, you and *Lewis*, in a group of about fifty people, set off along the Missouri river to begin your journey."
 ];
-let offsetX = textSize;
-let offsetY = textSize * 2;
+let offsetX = textSize * 2;
+let offsetY = textSize * 3;
 let lineSpacing = 5;
-let textSpeed = 1;
-let colors = ["#000000", "#dd3b00", "#0062d3"];
+let textSpeed = 2;
 
 class IntroScene {
     constructor(game) {
         this.game = game;
         this.started = false;
         this.startAnim = 500;
-        this.displayedLines = [[]];
-        this.lineIndex = 0;
-        this.textIndex = 0;
-        this.charIndex = 0;
-        this.colorIndex = -1;
         this.frame = 0;
+        this.textIndex = 0;
+        this.textRenderer = new TextRenderer(this.game.width / textSize - 4, this.game.height, textSize, lineSpacing);
+        this.textRenderer.setText(text[0]);
     }
 
     update() {
         this.frame++;
         if(this.frame % textSpeed === 0) {
             if(this.started && this.startAnim <= 0) {
-                this.progressText();
+                this.textRenderer.progress();
             }
-        }
-    }
-
-    progressText() {
-        let page = text[this.textIndex];
-
-        if(this.charIndex >= page.length) {
-            return;
-        }
-
-        let thisCharacter;
-
-        while(!thisCharacter) {
-            let c = page.charAt(this.charIndex);
-            switch(c) {
-                case "_":
-                    this.colorIndex = this.colorIndex === -1? 1 : -1;
-                    break;
-                case "*":
-                    this.colorIndex = this.colorIndex === -1? 2 : -1;
-                    break;
-                default:
-                    thisCharacter = c;
-            }
-            this.charIndex++;
-        }
-
-        let color = "#804a36";
-
-        if(this.colorIndex !== -1) {
-            color = colors[this.colorIndex];
-        }
-
-        this.displayedLines[this.lineIndex].push(new Character(thisCharacter, color));
-        let currentLineLength = this.displayedLines[this.lineIndex].length;
-
-        let lengthUntilNextWord = page.substring(this.charIndex).indexOf(" ");
-        if(lengthUntilNextWord === -1) {
-            lengthUntilNextWord = page.length - this.charIndex;
-        }
-        if(currentLineLength + lengthUntilNextWord > this.game.width / textSize - 2) {
-            this.displayedLines.push([]);
-            this.lineIndex++;
         }
     }
 
@@ -93,13 +48,12 @@ class IntroScene {
             context.lineWidth = 16;
             context.strokeRect(0, 0, width, height);
 
-            for(let i = 0; i < this.displayedLines.length; i++) {
-                let line = this.displayedLines[i];
-                for(let j = 0; j < line.length; j++) {
-                    let c = line[j];
-                    context.fillStyle = c.color;
-                    context.fillText(c.char, offsetX + j * textSize, offsetY + i * textSize + (i - 1) * lineSpacing);
-                }
+            this.textRenderer.draw(context, offsetX, offsetY);
+
+            if(this.textRenderer.finished()) {
+                context.fillStyle = "#804a36";
+                context.fillText(">", width - textSize * 2, height - textSize * 1);
+                context.fillText(">", width - textSize * 2 - 15, height - textSize * 1);
             }
         }
 
@@ -119,7 +73,18 @@ class IntroScene {
 
     event(e) {
         if(e.type === "mouseup") {
-            this.started = true;
+            if(!this.started) {
+                this.started = true;
+            } else {
+                if(!this.textRenderer.finished()) {
+                    while(!this.textRenderer.finished()) {
+                        this.textRenderer.progress();
+                    }
+                } else {
+                    this.textIndex++;
+                    this.textRenderer.setText(text[this.textIndex]);
+                }
+            }
         }
     }
 }

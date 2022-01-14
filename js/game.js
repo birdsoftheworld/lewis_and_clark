@@ -3,12 +3,12 @@ import { IntroScene } from "./scene/intro.js";
 
 class Game {
     constructor(width, height) {
+        this.width = width;
+        this.height = height;
+
         this.scene = new IntroScene(this);
         this.font = new FontFace("moderndos", "url('/assets/ModernDOS8x8.ttf')");
         this.font.load().then(() => document.fonts.add(this.font));
-
-        this.width = width;
-        this.height = height;
     }
 
     update() {
