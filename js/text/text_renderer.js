@@ -1,7 +1,12 @@
+import { Icon } from "../char/icon.js";
 import { tokenize } from "/js/char/tokenize.js";
 
-function isWhitespace(char) {
-    return char === " " || char === "\n" || char === "\t";
+function isIcon(c) {
+    return c instanceof Icon;
+}
+
+function isWhitespace(token) {
+    return !isIcon(token) && (token.char === " " || token.char === "\n" || token.char === "\t");
 }
 
 class TextRenderer {
@@ -28,12 +33,12 @@ class TextRenderer {
             this.lines[lineIndex].push(token);
             let currentLineLength = this.lines[lineIndex].length;
 
-            let lengthUntilNextWord = unusedTokens.findIndex(c => c.char === " " || c.char === "\n");
+            let lengthUntilNextWord = unusedTokens.findIndex(c => isWhitespace(c));
             if(lengthUntilNextWord === -1) {
                 lengthUntilNextWord = unusedTokens.length;
             }
 
-            if(currentLineLength + lengthUntilNextWord > this.width || token.char === "\n") {
+            if(currentLineLength + lengthUntilNextWord > this.width || (!isIcon(token) && token.char === "\n")) {
                 lineIndex++;
                 this.lines.push([]);
             }
@@ -54,7 +59,7 @@ class TextRenderer {
                 if(this.textSettings.align === "left" || this.textSettings.align === "center") {
                     for(let j = 0; j < line.length; j++) {
                         let c = line[j];
-                        if(isWhitespace(c.char)) {
+                        if(isWhitespace(c)) {
                             leadingWhitespace++;
                         } else {
                             break;
@@ -65,7 +70,7 @@ class TextRenderer {
                 if(this.textSettings.align === "right" || this.textSettings.align === "center") {
                     for(let j = line.length - 1; j >= 0; j--) {
                         let c = line[j];
-                        if(isWhitespace(c.char)) {
+                        if(isWhitespace(c)) {
                             trailingWhitespace++;
                         } else {
                             break;
@@ -86,11 +91,17 @@ class TextRenderer {
             }
             for(let j = 0; j < line.length; j++) {
                 let c = line[j];
-                if(isWhitespace(c.char)) {
+                if(isWhitespace(c)) {
                     continue;
                 }
-                context.fillStyle = c.color;
-                context.fillText(c.char, startingPosition + j * this.textSettings.textSize, y + i * this.textSettings.textSize + (i - 1) * this.textSettings.lineSpacing);
+                let cx = startingPosition + j * this.textSettings.textSize;
+                let cy = y + i * this.textSettings.textSize + (i - 1) * this.textSettings.lineSpacing;
+                if(!isIcon(c)) {
+                    context.fillStyle = c.color;
+                    context.fillText(c.char, cx, cy);
+                } else {
+                    c.draw(context, cx, cy - this.textSettings.textSize - 6, this.textSettings.textSize); // 6 is a magic number
+                }
             }
         }
     }

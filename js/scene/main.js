@@ -4,7 +4,7 @@ import { RiverSituation } from "/js/situations/situations.js";
 import { TextSettings } from "/js/text/text_settings.js";
 
 let unitSize = 25;
-let choiceTextSize = 20;
+let choiceTextSize = 16;
 let lineSpacing = 5;
 let textSpeed = 1;
 
@@ -54,7 +54,7 @@ class MainScene {
         this.choices = this.current.getChoices(this, this.situationState);
     }
 
-    consumeFood() {
+    spendTime() {
         this.vars.food -= this.vars.people * 0.5;
     }
 
@@ -98,7 +98,7 @@ class MainScene {
 
         // choices
         if(this.choices.length > 0) {
-            context.font = "40px moderndos";
+            context.font = "32px moderndos";
             context.textBaseline = "bottom";
 
             let n = this.choices.length;
@@ -143,6 +143,7 @@ class MainScene {
                 let clickedChoice = this.choices[Math.floor(e.clientX / widthPerChoice)];
                 if(clickedChoice !== undefined) {
                     let result = this.current.choose(clickedChoice, this, this.situationState);
+                    this.choices = [];
                     this.setText(result.text);
                     if(result.success) {
                         this.current = undefined;
