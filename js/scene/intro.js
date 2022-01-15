@@ -2,8 +2,8 @@ import { TextRenderer } from "/js/draw/text_renderer.js";
 
 let textSize = 25;
 let text = [
-    "Thomas Jefferson has asked *Meriwether Lewis* to lead an expedition through the new land of Louisiana.\n\nYou, _William Clark_, have been asked to accompany him.",
-    "On May 14, 1804, you and *Lewis*, in a group of about fifty people, set off along the Missouri river to begin your journey."
+    "Thomas Jefferson has asked *Meriwether Lewis* to lead an expedition into the new land of Louisiana.\n\nYou, _William Clark_, have been asked to accompany him.",
+    "On May 14, 1804, you and *Lewis*, joined by a group of about forty people, set off along the Missouri river to begin your journey."
 ];
 let offsetX = textSize * 2;
 let offsetY = textSize * 3;
@@ -82,7 +82,11 @@ class IntroScene {
                     }
                 } else {
                     this.textIndex++;
-                    this.textRenderer.setText(text[this.textIndex]);
+                    if(this.textIndex < text.length) {
+                        this.textRenderer.setText(text[this.textIndex]);
+                    } else {
+                        this.game.finishIntro();
+                    }
                 }
             }
         }
