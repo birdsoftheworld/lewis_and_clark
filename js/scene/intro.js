@@ -1,4 +1,5 @@
-import { GradualTextRenderer } from "/js/draw/gradual_text_renderer.js";
+import { GradualTextRenderer } from "/js/text/gradual_text_renderer.js";
+import { TextSettings } from "/js/text/text_settings.js";
 
 let textSize = 25;
 let text = [
@@ -17,7 +18,7 @@ class IntroScene {
         this.startAnim = 500;
         this.frame = 0;
         this.textIndex = 0;
-        this.textRenderer = new GradualTextRenderer(this.game.width / textSize - 4, this.game.height, textSize, lineSpacing);
+        this.textRenderer = new GradualTextRenderer(this.game.width / textSize - 4, this.game.height, new TextSettings(textSize, lineSpacing, "left"));
         this.textRenderer.setText(text[0]);
     }
 

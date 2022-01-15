@@ -1,6 +1,7 @@
-import { TextRenderer } from "/js/draw/text_renderer.js";
-import { GradualTextRenderer } from "/js/draw/gradual_text_renderer.js";
+import { TextRenderer } from "/js/text/text_renderer.js";
+import { GradualTextRenderer } from "/js/text/gradual_text_renderer.js";
 import { RiverSituation } from "/js/situations/situations.js";
+import { TextSettings } from "/js/text/text_settings.js";
 
 let unitSize = 25;
 let choiceTextSize = 20;
@@ -22,8 +23,8 @@ class MainScene {
             boat: true
         };
 
-        this.textRenderer = new GradualTextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, unitSize, lineSpacing);
-        this.choiceRenderer = new TextRenderer(0, 0, choiceTextSize, lineSpacing);
+        this.textRenderer = new GradualTextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, new TextSettings(unitSize, lineSpacing, "left"));
+        this.choiceRenderer = new TextRenderer(0, 0, new TextSettings(choiceTextSize, lineSpacing, "center"));
 
         this.text = [];
         this.textIndex = 0;
@@ -113,13 +114,10 @@ class MainScene {
                 context.strokeRect(4 + i * spacePerChoice, 4, spacePerChoice - 8, verticalSpace);
 
                 this.choiceRenderer.setText(choice.text);
-
-                let longestHorizontalLine = this.choiceRenderer.lines.reduce((a, v) => {
-                    return Math.max(a, v.length - (v[v.length - 1].char === " " ? 1 : 0));
-                }, 0);
+                
                 let verticalLines = this.choiceRenderer.lines.length;
 
-                this.choiceRenderer.draw(context, spacePerChoice * i + (spacePerChoice - choiceTextSize * longestHorizontalLine) / 2, height / 4 + choiceTextSize / 2 - (choiceTextSize / 2) * (verticalLines - 1));
+                this.choiceRenderer.draw(context, choiceTextSize / 2 + spacePerChoice * i, height / 4 + choiceTextSize / 2 - (choiceTextSize / 2) * (verticalLines - 1));
             }
         }
     }
