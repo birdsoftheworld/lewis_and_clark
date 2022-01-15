@@ -33,11 +33,7 @@ class Situation {
 class RiverSituation extends Situation {
     getText(scene, temp) {
         let str1 = "You come across a large river blocking your path.";
-        let str2 = "You can try to find a way around, or test your luck and ford the river.";
-        if(scene.vars.boat) {
-            str2 += "\nYou also have a boat you can use to get across safely.";
-        }
-        return [str1, str2];
+        return [str1];
     }
 
     getChoices(scene, temp) {
@@ -54,12 +50,12 @@ class RiverSituation extends Situation {
     choose(choice, scene, temp) {
         if(choice.id == "ford") {
             scene.hurt(Math.ceil(Math.random() * 25));
-            let text = ["You forded your way accross the river, sustaining damage along the way."];
-            if(Math.random() < 0.33) {
+            let str1 = "You forded your way across the river, sustaining damage along the way.";
+            if(Math.random() < 0.5) {
                 scene.vars.people--;
-                text.push("As you made it to the other side, you turned to see a member of your group being washed away.");
+                str1 += "\n_A member of your group was washed away in the strong currents._";
             }
-            return new Result(true, text);
+            return new Result(true, [str1]);
         }
         if(choice.id == "around") {
             if(Math.random() < 0.33) {

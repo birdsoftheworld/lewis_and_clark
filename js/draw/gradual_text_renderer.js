@@ -40,14 +40,7 @@ class GradualTextRenderer extends TextRenderer {
     }
 
     draw(context, x, y) {
-        for(let i = 0; i < this.displayedLines.length; i++) {
-            let line = this.displayedLines[i];
-            for(let j = 0; j < line.length; j++) {
-                let c = line[j];
-                context.fillStyle = c.color;
-                context.fillText(c.char, x + j * this.textSize, y + i * this.textSize + (i - 1) * this.lineSpacing);
-            }
-        }
+        this.drawText(context, x, y, this.displayedLines);
     }
 }
 

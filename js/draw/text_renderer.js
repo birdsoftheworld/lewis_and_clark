@@ -38,8 +38,12 @@ class TextRenderer {
     }
 
     draw(context, x, y) {
-        for(let i = 0; i < this.lines.length; i++) {
-            let line = this.lines[i];
+        this.drawText(context, x, y, this.lines);
+    }
+
+    drawText(context, x, y, text) {
+        for(let i = 0; i < text.length; i++) {
+            let line = text[i];
             for(let j = 0; j < line.length; j++) {
                 let c = line[j];
                 context.fillStyle = c.color;

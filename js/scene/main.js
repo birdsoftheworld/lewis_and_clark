@@ -1,3 +1,4 @@
+import { TextRenderer } from "/js/draw/text_renderer.js";
 import { GradualTextRenderer } from "/js/draw/gradual_text_renderer.js";
 import { RiverSituation } from "/js/situations/situations.js";
 
@@ -18,10 +19,11 @@ class MainScene {
             people: 40,
             food: 100,
             health: 100,
-            boat: false
+            boat: true
         };
 
         this.textRenderer = new GradualTextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, unitSize, lineSpacing);
+        this.choiceRenderer = new TextRenderer(0, 0, choiceTextSize, lineSpacing);
 
         this.text = [];
         this.textIndex = 0;
@@ -94,22 +96,30 @@ class MainScene {
             let n = this.choices.length;
             let spacePerChoice = Math.floor(width / n);
             let verticalSpace = height / 2 - 12;
+
+            let lineWidth = Math.floor(spacePerChoice / choiceTextSize - 1);
+            this.choiceRenderer.width = lineWidth;
+            this.choiceRenderer.height = verticalSpace;
+
             for(let i = 0; i < n; i++) {
                 let choice = this.choices[i];
 
                 context.fillStyle = "#ffe1af";
                 context.fillRect(i * spacePerChoice, 0, spacePerChoice, verticalSpace);
 
-                if(i % 2 === 1) {
-                    context.strokeStyle = "#0062d3";
-                } else {
-                    context.strokeStyle = "#dd3b00";
-                }
+                let colors = ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787"];
+                context.strokeStyle = colors[i];
                 context.lineWidth = 8;
                 context.strokeRect(4 + i * spacePerChoice, 4, spacePerChoice - 8, verticalSpace);
 
-                context.fillStyle = "#804a36";
-                context.fillText(choice.text, spacePerChoice * i + (spacePerChoice - choiceTextSize * choice.text.length) / 2, height / 4 + choiceTextSize / 2);
+                this.choiceRenderer.setText(choice.text);
+
+                let longestHorizontalLine = this.choiceRenderer.lines.reduce((a, v) => {
+                    return Math.max(a, v.length - (v[v.length - 1].char === " " ? 1 : 0));
+                }, 0);
+                let verticalLines = this.choiceRenderer.lines.length;
+
+                this.choiceRenderer.draw(context, spacePerChoice * i + (spacePerChoice - choiceTextSize * longestHorizontalLine) / 2, height / 4 + choiceTextSize / 2 - (choiceTextSize / 2) * (verticalLines - 1));
             }
         }
     }
