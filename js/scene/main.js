@@ -83,6 +83,13 @@ class MainScene {
         context.fillStyle = "#9c9289";
         context.font = "60px moderndos";
         context.fillText(this.vars.people, unitSize * 3.5, height - unitSize);
+
+        // bars
+        context.drawImage(this.game.resources.icons, 8, 0, 8, 8, unitSize * 7, height - unitSize * 3, unitSize * 2, unitSize * 2);
+        this.drawBar(context, unitSize * 9, height - unitSize * 2.5, unitSize * 6, unitSize * 1.25, "#8e0000", "#dd0000", this.vars.health / 100);
+
+        context.drawImage(this.game.resources.icons, 16, 0, 8, 8, unitSize * 16, height - unitSize * 3, unitSize * 2, unitSize * 2);
+        this.drawBar(context, unitSize * 18, height - unitSize * 2.5, unitSize * 6, unitSize * 1.25, "#603200", "#ab5700", this.vars.food / 100);
         
         // situation text
         context.font = "50px moderndos";
@@ -120,6 +127,13 @@ class MainScene {
                 this.choiceRenderer.draw(context, choiceTextSize / 2 + spacePerChoice * i, height / 4 + choiceTextSize / 2 - (choiceTextSize / 2) * (verticalLines - 1));
             }
         }
+    }
+
+    drawBar(context, x, y, w, h, c1, c2, p) {
+        context.fillStyle = c1;
+        context.fillRect(x, y, w, h);
+        context.fillStyle = c2;
+        context.fillRect(x, y, w * p, h);
     }
 
     event(e) {
