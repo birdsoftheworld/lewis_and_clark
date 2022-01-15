@@ -1,4 +1,4 @@
-import { TextRenderer } from "/js/draw/text_renderer.js";
+import { GradualTextRenderer } from "/js/draw/gradual_text_renderer.js";
 import { RiverSituation } from "/js/situations/situations.js";
 
 let unitSize = 25;
@@ -21,7 +21,7 @@ class MainScene {
             boat: false
         };
 
-        this.textRenderer = new TextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, unitSize, lineSpacing);
+        this.textRenderer = new GradualTextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, unitSize, lineSpacing);
 
         this.text = [];
         this.textIndex = 0;
@@ -93,7 +93,7 @@ class MainScene {
 
             let n = this.choices.length;
             let spacePerChoice = Math.floor(width / n);
-            let verticalSpace = height / 2 - 8;
+            let verticalSpace = height / 2 - 12;
             for(let i = 0; i < n; i++) {
                 let choice = this.choices[i];
 
@@ -129,10 +129,8 @@ class MainScene {
                     }
                 }
             } else {
-                if(!this.textRenderer.finished()) {
-                    while(!this.textRenderer.finished()) {
-                        this.textRenderer.progress();
-                    }
+                if(!this.textRenderer.isFinished()) {
+                    this.textRenderer.flush();
                 } else {
                     this.textIndex++;
                     if(this.textIndex < this.text.length) {

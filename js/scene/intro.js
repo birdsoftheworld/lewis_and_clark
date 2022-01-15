@@ -1,4 +1,4 @@
-import { TextRenderer } from "/js/draw/text_renderer.js";
+import { GradualTextRenderer } from "/js/draw/gradual_text_renderer.js";
 
 let textSize = 25;
 let text = [
@@ -17,7 +17,7 @@ class IntroScene {
         this.startAnim = 500;
         this.frame = 0;
         this.textIndex = 0;
-        this.textRenderer = new TextRenderer(this.game.width / textSize - 4, this.game.height, textSize, lineSpacing);
+        this.textRenderer = new GradualTextRenderer(this.game.width / textSize - 4, this.game.height, textSize, lineSpacing);
         this.textRenderer.setText(text[0]);
     }
 
@@ -50,7 +50,7 @@ class IntroScene {
 
             this.textRenderer.draw(context, offsetX, offsetY);
 
-            if(this.textRenderer.finished()) {
+            if(this.textRenderer.isFinished()) {
                 context.fillStyle = "#804a36";
                 context.fillText(">", width - textSize * 2, height - textSize * 1);
                 context.fillText(">", width - textSize * 2 - 15, height - textSize * 1);
@@ -76,10 +76,8 @@ class IntroScene {
             if(!this.started) {
                 this.started = true;
             } else {
-                if(!this.textRenderer.finished()) {
-                    while(!this.textRenderer.finished()) {
-                        this.textRenderer.progress();
-                    }
+                if(!this.textRenderer.isFinished()) {
+                    this.textRenderer.flush();
                 } else {
                     this.textIndex++;
                     if(this.textIndex < text.length) {
