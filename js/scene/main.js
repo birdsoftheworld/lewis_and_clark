@@ -4,6 +4,7 @@ import { RiverSituation } from "/js/situations/situations.js";
 import { TextSettings } from "/js/text/text_settings.js";
 
 let unitSize = 25;
+let iconSize = 24;
 let choiceTextSize = 16;
 let lineSpacing = 5;
 let textSpeed = 1;
@@ -20,7 +21,10 @@ class MainScene {
             people: 40,
             food: 100,
             health: 100,
-            boat: true
+            boat: true,
+            season: 0,
+            day: 0,
+            year: 0
         };
 
         this.textRenderer = new GradualTextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, new TextSettings(unitSize, lineSpacing, "left"));
@@ -56,6 +60,15 @@ class MainScene {
 
     spendTime() {
         this.vars.food -= this.vars.people * 0.5;
+        this.vars.day++;
+        if(this.vars.day >= 3) {
+            this.vars.day = 0;
+            this.vars.season++;
+            if(this.vars.season >= 4) {
+                this.vars.season = 0;
+                this.vars.year++;
+            }
+        }
     }
 
     hurt(amount) {
@@ -79,18 +92,31 @@ class MainScene {
         context.strokeRect(0, 0, width, height / 2);
 
         // person count
-        context.drawImage(this.game.resources.icons, 0, 0, 8, 8, unitSize, height - unitSize * 3, unitSize * 2, unitSize * 2);
+        context.drawImage(this.game.resources.icons, 0, 0, 8, 8, unitSize, height - unitSize * 3, unitSize * 2, iconSize * 2);
         context.fillStyle = "#9c9289";
         context.font = "60px moderndos";
         context.fillText(this.vars.people, unitSize * 3.5, height - unitSize);
 
         // bars
-        context.drawImage(this.game.resources.icons, 8, 0, 8, 8, unitSize * 7, height - unitSize * 3, unitSize * 2, unitSize * 2);
+        context.drawImage(this.game.resources.icons, 8, 0, 8, 8, unitSize * 7, height - unitSize * 3, unitSize * 2, iconSize * 2);
         this.drawBar(context, unitSize * 9, height - unitSize * 2.5, unitSize * 6, unitSize * 1.25, "#8e0000", "#dd0000", this.vars.health / 100);
 
-        context.drawImage(this.game.resources.icons, 16, 0, 8, 8, unitSize * 16, height - unitSize * 3, unitSize * 2, unitSize * 2);
+        context.drawImage(this.game.resources.icons, 16, 0, 8, 8, unitSize * 16, height - unitSize * 3, unitSize * 2, iconSize * 2);
         this.drawBar(context, unitSize * 18, height - unitSize * 2.5, unitSize * 6, unitSize * 1.25, "#603200", "#ab5700", this.vars.food / 100);
         
+        // seasons
+        let seasonImagePos = 16 * this.vars.season + 8;
+        context.drawImage(this.game.resources.icons, seasonImagePos, 8, 8, 8, unitSize * 25, height - unitSize * 3, iconSize * 2, iconSize * 2);
+
+        // days
+        for(let i = 0; i < 3; i++) {
+            let position = 32;
+            if(this.vars.day >= i) {
+                position += 8;
+            }
+            context.drawImage(this.game.resources.icons, position, 0, 8, 8, Math.floor(unitSize * 27) + unitSize * i, Math.floor(height - unitSize * 2.5), iconSize, iconSize);
+        }
+
         // situation text
         context.font = "50px moderndos";
         context.textBaseline = "bottom";

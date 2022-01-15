@@ -63,7 +63,7 @@ class RiverSituation extends Situation {
             } else {
                 temp.failedToFindAWayAround = true;
                 scene.spendTime();
-                return new Result(false, ["There is no other way around the river."]);
+                return new Result(false, ["There is no other way around the river.", "You come across a large river blocking your path."]);
             }
         }
         if(choice.id == "boat") {
