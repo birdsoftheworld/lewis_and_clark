@@ -1,5 +1,5 @@
-import { GradualTextRenderer } from "/js/text/gradual_text_renderer.js";
-import { TextSettings } from "/js/text/text_settings.js";
+import { GradualTextRenderer } from "../text/gradual_text_renderer.js";
+import { TextSettings } from "../text/text_settings.js";
 
 let textSize = 25;
 let text = [

@@ -1,5 +1,5 @@
 import { Icon } from "../char/icon.js";
-import { tokenize } from "/js/char/tokenize.js";
+import { tokenize } from "../char/tokenize.js";
 
 function isIcon(c) {
     return c instanceof Icon;

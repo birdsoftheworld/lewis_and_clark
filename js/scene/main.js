@@ -1,7 +1,7 @@
-import { TextRenderer } from "/js/text/text_renderer.js";
-import { GradualTextRenderer } from "/js/text/gradual_text_renderer.js";
-import { RiverSituation, MeadowSituation } from "/js/situations/situations.js";
-import { TextSettings } from "/js/text/text_settings.js";
+import { TextRenderer } from "../text/text_renderer.js";
+import { GradualTextRenderer } from "../text/gradual_text_renderer.js";
+import { RiverSituation, MeadowSituation } from "../situations/situations.js";
+import { TextSettings } from "../text/text_settings.js";
 
 let unitSize = 25;
 let iconSize = 24;

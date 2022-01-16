@@ -1,4 +1,4 @@
-import { TextRenderer } from "/js/text/text_renderer.js";
+import { TextRenderer } from "./text_renderer.js";
 
 class GradualTextRenderer extends TextRenderer {
     setText(text) {
