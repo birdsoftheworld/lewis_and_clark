@@ -1,6 +1,6 @@
 import { TextRenderer } from "/js/text/text_renderer.js";
 import { GradualTextRenderer } from "/js/text/gradual_text_renderer.js";
-import { RiverSituation } from "/js/situations/situations.js";
+import { RiverSituation, MeadowSituation } from "/js/situations/situations.js";
 import { TextSettings } from "/js/text/text_settings.js";
 
 let unitSize = 25;
@@ -9,9 +9,20 @@ let choiceTextSize = 16;
 let lineSpacing = 5;
 let textSpeed = 1;
 
+let baseYear = 1804;
+
 let situations = [
-    new RiverSituation()
+    s => new RiverSituation(s),
+    s => new MeadowSituation(s)
 ];
+
+const State = {
+    START: "start",
+    CHOICE: "choice",
+    AFTER_CHOICE: "after_choice",
+    END: "end",
+    BETWEEN: "between"
+};
 
 class MainScene {
     constructor(game) {
@@ -30,11 +41,12 @@ class MainScene {
         this.textRenderer = new GradualTextRenderer(this.game.width / unitSize - 2, this.game.height / 2 - unitSize * 2, new TextSettings(unitSize, lineSpacing, "left"));
         this.choiceRenderer = new TextRenderer(0, 0, new TextSettings(choiceTextSize, lineSpacing, "center"));
 
-        this.text = [];
-        this.textIndex = 0;
+        this.currentText = undefined;
+        this.texts = [];
         this.choices = [];
 
         this.newSituation();
+        this.nextText();
         this.frame = 0;
     }
 
@@ -43,23 +55,61 @@ class MainScene {
         if(this.frame % textSpeed === 0) {
             this.textRenderer.progress();
         }
+        if(this.textSpeed === 0) {
+            this.textRenderer.flush();
+        }
+        if(this.state === State.START && this.textIndex >= this.texts.length - 1) {
+            this.state = State.CHOICE;
+            this.choices = this.current.getChoices();
+        }
     }
 
-    setText(texts) {
-        this.textIndex = 0;
-        this.text = texts;
-        this.textRenderer.setText(this.text[this.textIndex]);
+    addTexts(texts) {
+        this.texts = this.texts.concat(texts);
+    }
+
+    nextText() {
+        this.setCurrentText(this.texts.shift());
+    }
+
+    isNextText() {
+        return this.texts.length > 0;
+    }
+
+    setCurrentText(text) {
+        this.currentText = text;
+        this.textRenderer.setText(text);
+    }
+
+    endSituation() {
+        this.state = State.BETWEEN;
+        this.spendTime(false, false);
+        this.nextText();
     }
 
     newSituation() {
-        this.current = situations[Math.floor(Math.random() * situations.length)];
+        this.current = situations[Math.floor(Math.random() * situations.length)](this);
         this.situationState = {};
-        this.setText(this.current.getText(this, this.situationState));
-        this.choices = this.current.getChoices(this, this.situationState);
+        this.addTexts(this.current.getText());
+        this.state = State.START;
+        if(this.texts.length <= 1) {
+            this.state = State.CHOICE;
+            this.choices = this.current.getChoices();
+        }
     }
 
-    spendTime() {
-        this.vars.food -= this.vars.people * 0.5;
+    spendTime(safeFromCold, safeFromHunger) {
+        let str = "Time passes. ";
+
+        if(!safeFromHunger) {
+            this.vars.food = Math.max(0, this.vars.food - (100/6));
+        }
+
+        if(this.vars.season === 3 && !safeFromCold) {
+            str += "The Corps are injured by the harsh cold of the winter. ";
+            this.hurt(25, "cold");
+        }
+
         this.vars.day++;
         if(this.vars.day >= 3) {
             this.vars.day = 0;
@@ -69,12 +119,24 @@ class MainScene {
                 this.vars.year++;
             }
         }
+        if(this.vars.day === 0) {
+            let seasons = ["Spring", "Summer", "Fall", "Winter"]
+            str += `\nIt is now ${seasons[this.vars.season]}. `;
+            if(this.vars.season === 0) {
+                str += `The year is now ${baseYear + this.vars.year}. `;
+            }
+        }
+        if(this.vars.food <= 0) {
+            str += "\n_You are starving._";
+            this.hurt(34, "hunger");
+        }
+        this.addTexts([str]);
     }
 
-    hurt(amount) {
+    hurt(amount, source) {
         this.vars.health -= amount;
         if(amount <= 0) {
-            
+            this.game.gameOver(this.vars, source);
         }
     }
 
@@ -168,25 +230,34 @@ class MainScene {
                 let widthPerChoice = this.game.width / this.choices.length;
                 let clickedChoice = this.choices[Math.floor(e.clientX / widthPerChoice)];
                 if(clickedChoice !== undefined) {
-                    let result = this.current.choose(clickedChoice, this, this.situationState);
+                    let result = this.current.choose(clickedChoice);
                     this.choices = [];
-                    this.setText(result.text);
+                    this.addTexts(result.text);
+                    this.nextText();
                     if(result.success) {
                         this.current = undefined;
+                        this.state = State.END;
                     } else {
-                        this.choices = this.current.getChoices(this, this.situationState);
+                        this.state = State.AFTER_CHOICE;
                     }
                 }
             } else {
                 if(!this.textRenderer.isFinished()) {
                     this.textRenderer.flush();
                 } else {
-                    this.textIndex++;
-                    if(this.textIndex < this.text.length) {
-                        this.textRenderer.setText(this.text[this.textIndex]);
+                    if(this.texts.length > 0) {
+                        this.nextText();
                     } else {
-                        if(this.current === undefined) {
+                        if(this.state === State.AFTER_CHOICE) {
+                            this.state = State.CHOICE;
+                            this.addTexts(this.current.getText());
+                            this.choices = this.current.getChoices();
+                            this.nextText();
+                        } else if(this.state === State.END) {
+                            this.endSituation();
+                        } else if(this.state === State.BETWEEN) {
                             this.newSituation();
+                            this.nextText();
                         }
                     }
                 }
