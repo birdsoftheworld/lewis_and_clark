@@ -101,8 +101,8 @@ class RiverSituation extends Situation {
                 let killed = Math.ceil(Math.random() * 3);
                 text.push(`_As you cross, the ice breaks beneath you. You are severely injured. ${killed} people are caught beneath the ice. -${killed}{person}_`);
                 this.scene.hurt(30, "frozen_river");
-                return new Result(true, text);
             }
+            return new Result(true, text);
         }
         if(choice.id === "ice_careful") {
             return new Result(true, ["You make your way across the ice carefully, being sure not to break it."]);
@@ -128,7 +128,7 @@ class MeadowSituation extends Situation {
     }
 
     choose(choice) {
-        if(choice.id === "wait" || choice.id === "heal" || choice.id === "hunt") {
+        if(choice.id === "wait" || choice.id === "heal") {
             this.scene.spendTime(this.camping, false);
         }
         if(choice.id === "heal") {
@@ -145,6 +145,7 @@ class MeadowSituation extends Situation {
         if(choice.id === "hunt") {
             this.hunted = true;
             this.scene.vars.food = Math.min(100, this.scene.vars.food + 75);
+            this.scene.spendTime(this.camping, false);
             return new Result(false, ["You hunt the animals, gaining a surplus of food. +{food}"]);
         }
         if(choice.id === "continue") {
@@ -162,7 +163,7 @@ class MeadowSituation extends Situation {
     getCampingChoices() {
         let choices = [ new Choice("camp_continue", "Leave the camp"), new Choice("wait", "Wait\n{time}") ];
         if(this.scene.vars.health < 100) {
-            choices.push(new Choice("heal", "Tend to the wounded\n{time}"));
+            choices.push(new Choice("heal", "Tend to the wounded\n{health}{time}"));
         }
         if(this.areAnimals()) {
             choices.push(new Choice("hunt", "Hunt the animals\n{food}{time}"));
