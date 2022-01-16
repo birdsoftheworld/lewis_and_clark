@@ -5,7 +5,7 @@ let colors = ["#804a36", "#dd3b00", "#0062d3"];
 let icons = new Map();
 
 let iconsImg = new Image();
-iconsImg.src = "/assets/icons.png";
+iconsImg.src = "../../assets/icons.png";
 
 icons.set("person", new Icon(iconsImg, 0, 0, 8, 8, 1));
 icons.set("health", new Icon(iconsImg, 8, 0, 8, 8, 1));

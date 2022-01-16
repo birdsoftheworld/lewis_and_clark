@@ -10,11 +10,11 @@ class Game {
 
         this.resources = {};
 
-        this.resources.font = new FontFace("moderndos", "url('/assets/ModernDOS8x8.ttf')");
+        this.resources.font = new FontFace("moderndos", "url('../assets/ModernDOS8x8.ttf')");
         this.resources.font.load().then(() => document.fonts.add(this.resources.font));
         
         this.resources.icons = new Image();
-        this.resources.icons.src = "/assets/icons.png";
+        this.resources.icons.src = "../assets/icons.png";
     }
 
     finishIntro() {
