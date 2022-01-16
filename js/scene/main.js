@@ -1,6 +1,6 @@
 import { TextRenderer } from "../text/text_renderer.js";
 import { GradualTextRenderer } from "../text/gradual_text_renderer.js";
-import { RiverSituation, MeadowSituation } from "../situations/situations.js";
+import { RiverSituation, MeadowSituation, NativeSettlementSituation } from "../situations/situations.js";
 import { TextSettings } from "../text/text_settings.js";
 
 let unitSize = 25;
@@ -13,7 +13,8 @@ let baseYear = 1804;
 
 let situations = [
     s => new RiverSituation(s),
-    s => new MeadowSituation(s)
+    s => new MeadowSituation(s),
+    s => new NativeSettlementSituation(s)
 ];
 
 const State = {
@@ -33,6 +34,8 @@ class MainScene {
             food: 100,
             health: 100,
             boat: true,
+            magicKarma: 10,
+            areaClears: 0,
             season: 0,
             day: 0,
             year: 0
@@ -58,7 +61,7 @@ class MainScene {
         if(this.textSpeed === 0) {
             this.textRenderer.flush();
         }
-        if(this.state === State.START && this.textIndex >= this.texts.length - 1) {
+        if(this.state === State.START && !this.isNextText()) {
             this.state = State.CHOICE;
             this.choices = this.current.getChoices();
         }
@@ -85,6 +88,7 @@ class MainScene {
         this.state = State.BETWEEN;
         this.spendTime(false, false);
         this.nextText();
+        this.vars.areaClears++;
     }
 
     newSituation() {
@@ -128,7 +132,7 @@ class MainScene {
         }
         if(this.vars.food <= 0) {
             str += "\n_You are starving._";
-            this.hurt(34, "hunger");
+            this.hurt(25, "hunger");
         }
         this.addTexts([str]);
     }

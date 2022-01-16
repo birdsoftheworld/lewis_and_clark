@@ -1,3 +1,5 @@
+import { Util } from "../util/util.js";
+
 class Result {
     constructor(success, text) {
         this.success = success;
@@ -42,7 +44,7 @@ class RiverSituation extends Situation {
     }
 
     getWinterChoices() {
-        let choices = [ new Choice("ice_risky", "Cross the ice quickly"), new Choice("ice_careful", "Cross the ice carefully\n{time}") ];
+        let choices = [ new Choice("ice", "Cross the ice") ];
         return choices;
     }
 
@@ -95,17 +97,8 @@ class RiverSituation extends Situation {
             }
             return new Result(true, text);
         }
-        if(choice.id === "ice_risky") {
-            let text = ["You decide to make your way across the ice as quickly as possible."];
-            if(Math.random() < 0.33) {
-                let killed = Math.ceil(Math.random() * 3);
-                text.push(`_As you cross, the ice breaks beneath you. You are severely injured. ${killed} people are caught beneath the ice. -${killed}{person}_`);
-                this.scene.hurt(30, "frozen_river");
-            }
-            return new Result(true, text);
-        }
-        if(choice.id === "ice_careful") {
-            return new Result(true, ["You make your way across the ice carefully, being sure not to break it."]);
+        if(choice.id === "ice") {
+            return new Result(true, ["You carefully make your way across the ice."]);
         }
     }
 }
@@ -172,6 +165,10 @@ class MeadowSituation extends Situation {
     }
 
     getChoices() {
+        if(this.scene.vars.season === 0 && this.scene.vars.day === 0) {
+            this.hunted = false;
+        }
+
         if(this.camping) {
             return this.getCampingChoices();
         }
@@ -186,4 +183,185 @@ class MeadowSituation extends Situation {
     }
 }
 
-export { RiverSituation, MeadowSituation };
+class NativeSettlementSituation extends Situation {
+    constructor(scene) {
+        super(scene);
+        this.stage = "meeting";
+        this.meetingCount = Math.ceil(Math.random() * 3);
+        if(Math.random() < 1 / this.scene.magicKarma) {
+            this.meetingType = "hostile";
+            this.attackChance = 0.5;
+        } else {
+            this.meetingType = "friendly";
+            this.attackChance = 1 / this.scene.magicKarma;
+        }
+    }
+
+    isPlural() {
+        return this.meetingCount > 1;
+    }
+
+    getText() {
+        if(this.stage === "meeting") {
+            let str1 = "Ahead, you see a settlement, likely that of one of the native tribes.";
+            let str2 = `${Util.capitalizeFirstLetter(Util.getEnglishWordForNumber(this.meetingCount))} ${this.isPlural()? "people ride" : "person rides"} up to your group on ${this.isPlural()? "horses" : "a horse"}.`;
+            if(this.meetingType === "hostile") {
+                str2 += "\nThey seem suspicious of you.";
+            } else if(this.meetingType === "friendly") {
+                str2 += "\nThey seem indifferent towards you.";
+            }
+
+            return [str1, str2];
+        } else if(this.stage === "communication") {
+            return [ "They ask you to put your weapons down." ];
+        } else if(this.stage === "attack") {
+            return [ "You come out of the fight as the victor. You decide not to risk further conflict, and continue." ];
+        } else if(this.stage === "camp") {
+            return [ "You are in the native settlement." ];
+        }
+    }
+
+    getMeetingChoices() {
+        return [ new Choice("communicate", "Talk with them"), new Choice("attack", "Attack them"), new Choice("run", "Run away") ];
+    }
+
+    getCommunicationChoices() {
+        return [ new Choice("comply", "Comply"), new Choice("weapons", "Keep holding your weapons"), new Choice("run", "Run away") ];
+    }
+
+    getCampChoices() {
+        let choices = [
+            new Choice("camp_continue", "Leave"),
+            new Choice("wait", "Wait\n{time}")
+        ];
+
+        if(this.scene.vars.health < 100) {
+            choices.push(new Choice("heal", "Tend to the wounded\n{health}{time}"));
+        }
+
+        return choices;
+    }
+
+    getChoices() {
+        switch(this.stage) {
+            case "meeting":
+                return this.getMeetingChoices();
+            case "communication":
+                return this.getCommunicationChoices();
+            case "attack":
+                return [ new Choice("attack_leave", ["Leave"]) ];
+            case "camp":
+                return this.getCampChoices();
+        }
+    }
+
+    dealDamage(multiplier) {
+        this.scene.hurt(multiplier * 20);
+    }
+
+    attack(firstStrike, surprise) {
+        this.stage = "attack";
+        let selfDamageMultiplier = this.meetingCount;
+
+        if(this.meetingType === "friendly") {
+            selfDamageMultiplier *= 0.75;
+        }
+
+        if(firstStrike) {
+            if(this.meetingType === "friendly") {
+                this.changeKarma(-2);
+            } else {
+                this.changeKarma(-1);
+            }
+            selfDamageMultiplier *= 0.5;
+            this.dealDamage(selfDamageMultiplier);
+            return new Result(false, [ `Before the ${Util.getEnglishWordForNumber(this.meetingCount)} in front of you ${this.isPlural()? "have" : "has"} time to react, you decide to make the first move and attack.` ]);
+        }
+
+        if(surprise) {
+            selfDamageMultiplier *= 1.5;
+            this.dealDamage(selfDamageMultiplier);
+            return new Result(false, [ `As soon as you put down your weapons, the ${Util.getEnglishWordForNumber(this.meetingCount)} in front of you attack${this.isPlural()? "" : "s"}.` ]);
+        }
+
+        this.dealDamage(selfDamageMultiplier);
+        return new Result(false, [ `The natives consider your act of not putting down your weapons as a sign of hostility, and attack.` ]);
+    }
+
+    communicate() {
+        this.stage = "communication";
+        return new Result(false, `*Lewis* talks to the native${this.isPlural()? "s" : ""}.`);
+    }
+
+    comply() {
+        this.changeKarma(1);
+
+        if(this.meetingType === "hostile") {
+            if(Math.random() < 2 / this.scene.vars.magicKarma) {
+                return this.attack(false, true);
+            }
+        } else if(this.meetingType === "friendly") {
+            if(Math.random() < 1 / this.scene.vars.magicKarma) {
+                return this.attack(false, true);
+            }
+        }
+
+        this.stage = "camp";
+        let text = [
+            `The native${this.isPlural()? "s" : ""} recognize${this.isPlural()? "" : "s"} your sign of peace, and dismount${this.isPlural()? "" : "s"} their horse${this.isPlural()? "s" : ""}.`,
+            `They introduce themselves, and generously invite you to stay within their settlement.`
+        ];
+
+        return new Result(false, text);
+    }
+
+    keepWeapons() {
+        this.changeKarma(-0.5);
+        if(this.meetingType === "hostile") {
+            if(Math.random() < 8 / this.scene.vars.magicKarma) {
+                return this.attack(false, false);
+            }
+        } else {
+            if(Math.random() < 4 / this.scene.vars.magicKarma) {
+                return this.attack(false, false);
+            }
+        }
+        return new Result(true, [ "Seeing that you did not put your weapons down, the natives flee. You continue onwards." ]);
+    }
+
+    changeKarma(amount) {
+        this.scene.vars.magicKarma = Math.max(1, this.scene.vars.magicKarma + amount);
+    }
+
+    choose(choice) {
+        switch(choice.id) {
+            case "run":
+                return new Result(true, "You decide to run before any harm might come to you.");
+            case "attack":
+                return this.attack(true, false);
+            case "communicate":
+                return this.communicate();
+            case "comply":
+                return this.comply();
+            case "weapons":
+                return this.keepWeapons();
+            case "attack_leave":
+                return new Result(true, ["You move onwards."]);
+            case "camp_continue":
+                return new Result(true, "You leave the settlement.");
+            case "heal":
+                this.scene.vars.health = Math.min(100, this.scene.vars.health + 50);
+                this.scene.spendTime(true, true);
+                return new Result(false, ["You spend time healing those in poor condition. The natives seem willing to help."]);
+            case "wait":
+                this.scene.spendTime(true, true);
+                return new Result(false, ["You wait."]);
+        }
+    }
+}
+
+class MountainSituation extends Situation {
+
+}
+
+export { RiverSituation, MeadowSituation, NativeSettlementSituation};
