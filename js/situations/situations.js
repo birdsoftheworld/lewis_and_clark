@@ -352,7 +352,7 @@ class NativeSettlementSituation extends Situation {
             case "heal":
                 this.scene.vars.health = Math.min(100, this.scene.vars.health + 50);
                 this.scene.spendTime(true, true);
-                return new Result(false, ["You spend time healing those in poor condition. The natives seem willing to help."]);
+                return new Result(false, ["You spend time healing those in poor condition."]);
             case "wait":
                 this.scene.spendTime(true, true);
                 return new Result(false, ["You wait."]);
@@ -360,8 +360,186 @@ class NativeSettlementSituation extends Situation {
     }
 }
 
+let directions = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 class MountainSituation extends Situation {
+    constructor(scene) {
+        super(scene);
+        let mazeSize = 6;
+        let bounds = 5;
+        let foodSources = 2;
+        this.generateMaze(mazeSize, bounds);
+        this.generateFoodSources(foodSources);
+        this.setStart();
+        this.generateExit();
+        this.firstTime = true;
+    }
 
+    generateMaze(size, bounds) {
+        this.maze = [];
+        for(let i = 0; i < bounds; i++) {
+            this.maze.push(new Array(bounds).fill(-1));
+        }
+
+        this.maze[Math.floor(bounds / 2)][Math.floor(bounds / 2)] = 1;
+        for(let i = 0; i < size - 1; i++) {
+            let possible = this.getAllAccessibleOpenSpaces();
+            let selected = possible[Math.floor(Math.random() * possible.length)];
+            this.maze[selected[0]][selected[1]] = 1;
+        }
+    }
+
+    getAllAccessibleOpenSpaces() {
+        let spaces = [];
+
+        for (let x = 0; x < this.maze.length; x++) {
+            const row = this.maze[x];
+            for (let y = 0; y < row.length; y++) {
+                if(this.maze[x][y] !== -1) {
+                    continue;
+                }
+                for (let i = 0; i < directions.length; i++) {
+                    const direction = directions[i];
+                    let rx = x + direction[0];
+                    let ry = y + direction[1];
+                    if(rx < 0 || ry < 0 || rx >= this.maze.length || ry >= this.maze[0].length) {
+                        continue;
+                    }
+                    if(this.maze[rx][ry] !== -1) {
+                        spaces.push([x, y]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return spaces;
+    }
+
+    generateFoodSources(number) {
+        let possible = [];
+        for(let x = 0; x < this.maze.length; x++) {
+            for (let y = 0; y < this.maze[0].length; y++) {
+                if(this.maze[x][y] === 1) {
+                    possible.push([x, y]);
+                }
+            }
+        }
+
+        for(let i = 0; i < number; i++) {
+            let selectedIndex = Math.floor(Math.random() * possible.length);
+            let selected = possible[selectedIndex];
+            this.maze[selected[0]][selected[1]] = 2;
+            possible.splice(selectedIndex, 1);
+        }
+    }
+
+    generateExit() {
+        let possible = this.getAllAccessibleOpenSpaces();
+        let selected = possible[Math.floor(Math.random() * possible.length)];
+        this.maze[selected[0]][selected[1]] = 3;
+    }
+
+    setStart() {
+        let possible = [];
+        for(let x = 0; x < this.maze.length; x++) {
+            for (let y = 0; y < this.maze[0].length; y++) {
+                if(this.maze[x][y] !== -1) {
+                    possible.push([x, y]);
+                }
+            }
+        }
+        let selected = possible[Math.floor(Math.random() * possible.length)];
+        this.currentX = selected[0];
+        this.currentY = selected[1];
+    }
+
+    choose(choice) {
+        let dirs = ["north", "east", "south", "west"];
+        let index = dirs.indexOf(choice.id);
+
+        if(index !== -1) {
+            let dir = directions[index];
+            this.currentX += dir[0];
+            this.currentY += dir[1];
+            this.scene.spendTime(false, false);
+            if(this.maze[this.currentX][this.currentY] === 3) {
+                return new Result(true, ["You headed " + choice.id + ".", "As you did so, your group emerged from the mountains. You made it out."]);
+            }
+            return new Result(false, ["You headed " + choice.id + "."]);
+        }
+
+        if(choice.id === "hunt") {
+            this.scene.vars.food = Math.min(100, this.scene.vars.food + 75);
+            this.scene.spendTime(false, false);
+            this.maze[this.currentX][this.currentY] = 1;
+            return new Result(false, ["You hunted the animals."]);
+        }
+    }
+
+    getChoices() {
+        let choices = [];
+        let directions = this.getDirections();
+
+        for (let i = 0; i < directions.length; i++) {
+            const element = directions[i];
+            if(element) {
+                let d = ["north", "east", "south", "west"][i];
+                choices.push(new Choice(d, `Go ${Util.capitalizeFirstLetter(d)}\n{${d}}{time}`));
+            }
+        }
+        if(this.maze[this.currentX][this.currentY] === 2) {
+            choices.push(new Choice("hunt", "Hunt the animals\n{time}"));
+        }
+
+        return choices;
+    }
+
+    inBounds(x, y) {
+        return !(x < 0 || y < 0 || x >= this.maze.length || y >= this.maze[0].length);
+    }
+
+    getDirections() {
+        let dirs = [false, false, false, false];
+        for (let i = 0; i < directions.length; i++) {
+            const direction = directions[i];
+            let rx = this.currentX + direction[0];
+            let ry = this.currentY + direction[1];
+            if(this.inBounds(rx, ry) && this.maze[rx][ry] !== -1) {
+                dirs[i] = true;
+            }
+        }
+        return dirs;
+    }
+
+    getText() {
+        let text = [];
+        if(this.firstTime) {
+            text.push("You enter the mountains.");
+            this.firstTime = false;
+        }
+        let str1 = "You are on a rocky plain.";
+        let roomType = this.maze[this.currentX][this.currentY];
+        if(roomType === 2) {
+            str1 += "\nThere is a herd of animals here.";
+        }
+
+        let dirs = this.getDirections();
+        let count = 0;
+        str1 += "\nThe directions you can go from here are: ";
+        for (let i = 0; i < dirs.length; i++) {
+            const element = dirs[i];
+            if(element) {
+                if(count !== 0) {
+                    str1 += ", ";
+                }
+                str1 += ["north", "east", "south", "west"][i];
+                count++;
+            }
+        }
+        str1 += ".";
+        text.push(str1);
+        return text;
+    }
 }
 
-export { RiverSituation, MeadowSituation, NativeSettlementSituation};
+export { RiverSituation, MeadowSituation, NativeSettlementSituation, MountainSituation };

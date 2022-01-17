@@ -1,6 +1,6 @@
 import { TextRenderer } from "../text/text_renderer.js";
 import { GradualTextRenderer } from "../text/gradual_text_renderer.js";
-import { RiverSituation, MeadowSituation, NativeSettlementSituation } from "../situations/situations.js";
+import { RiverSituation, MeadowSituation, NativeSettlementSituation, MountainSituation } from "../situations/situations.js";
 import { TextSettings } from "../text/text_settings.js";
 
 let unitSize = 25;
@@ -89,10 +89,20 @@ class MainScene {
         this.spendTime(false, false);
         this.nextText();
         this.vars.areaClears++;
+        if((this.vars.areaClears + 1) % 5 === 0) {
+            this.addTexts(["In the distance, you can see mountains."]);
+        }
+        if(this.vars.areaClears >= 11) {
+            this.game.youWin();
+        }
     }
 
     newSituation() {
-        this.current = situations[Math.floor(Math.random() * situations.length)](this);
+        if(this.vars.areaClears % 5 === 0 && this.vars.areaClears > 0) {
+            this.current = new MountainSituation(this);
+        } else {
+            this.current = situations[Math.floor(Math.random() * situations.length)](this);
+        }
         this.situationState = {};
         this.addTexts(this.current.getText());
         this.state = State.START;
@@ -218,6 +228,15 @@ class MainScene {
 
                 this.choiceRenderer.draw(context, choiceTextSize / 2 + spacePerChoice * i, height / 4 + choiceTextSize / 2 - (choiceTextSize / 2) * (verticalLines - 1));
             }
+        }
+
+        // next text indicator
+        if(this.textRenderer.isFinished() && this.state !== State.CHOICE) {
+            context.fillStyle = "#804a36";
+            context.font = "50px moderndos";
+            context.textBaseline = "bottom";
+            context.fillText(">", width - unitSize * 2, height - unitSize * 3);
+            context.fillText(">", width - unitSize * 2 - 15, height - unitSize * 3);
         }
     }
 

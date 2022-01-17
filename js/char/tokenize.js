@@ -11,6 +11,10 @@ icons.set("person", new Icon(iconsImg, 0, 0, 8, 8, 1));
 icons.set("health", new Icon(iconsImg, 8, 0, 8, 8, 1));
 icons.set("food", new Icon(iconsImg, 16, 0, 8, 8, 1));
 icons.set("time", new Icon(iconsImg, 24, 0, 8, 8, 1));
+icons.set("north", new Icon(iconsImg, 48, 0, 8, 8, 1));
+icons.set("east", new Icon(iconsImg, 56, 0, 8, 8, 1));
+icons.set("south", new Icon(iconsImg, 64, 0, 8, 8, 1));
+icons.set("west", new Icon(iconsImg, 72, 0, 8, 8, 1));
 
 function tokenize(text) {
     let tokens = [];

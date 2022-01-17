@@ -21,6 +21,14 @@ class Game {
         this.scene = new MainScene(this);
     }
 
+    gameOver() {
+
+    }
+
+    youWin() {
+        
+    }
+
     update() {
         this.scene.update();
     }
