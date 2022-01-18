@@ -249,14 +249,14 @@ class NativeSettlementSituation extends Situation {
             case "communication":
                 return this.getCommunicationChoices();
             case "attack":
-                return [ new Choice("attack_leave", ["Leave"]) ];
+                return [ new Choice("attack_leave", "Leave") ];
             case "camp":
                 return this.getCampChoices();
         }
     }
 
     dealDamage(multiplier) {
-        this.scene.hurt(multiplier * 20);
+        this.scene.hurt(multiplier * 20, "attack");
     }
 
     attack(firstStrike, surprise) {
@@ -273,7 +273,6 @@ class NativeSettlementSituation extends Situation {
             } else {
                 this.changeKarma(-1);
             }
-            selfDamageMultiplier *= 0.5;
             this.dealDamage(selfDamageMultiplier);
             return new Result(false, [ `Before the ${Util.getEnglishWordForNumber(this.meetingCount)} in front of you ${this.isPlural()? "have" : "has"} time to react, you decide to make the first move and attack.` ]);
         }

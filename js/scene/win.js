@@ -1,0 +1,5 @@
+class WinScene {
+
+}
+
+export { WinScene };

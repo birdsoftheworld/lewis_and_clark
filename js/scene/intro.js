@@ -61,6 +61,7 @@ class IntroScene {
         if(this.startAnim > 0) {
             context.fillStyle = "black";
 
+            context.save();
             context.globalAlpha = this.startAnim / 500;
             context.fillRect(0, 0, width, height);
 
@@ -68,7 +69,7 @@ class IntroScene {
             let str = "[Click anywhere to begin.]";
             context.fillText(str, (width - str.length * textSize) / 2, (height + textSize) / 2);
 
-            context.globalAlpha = 1;
+            context.restore();
         }
     }
 
@@ -84,7 +85,7 @@ class IntroScene {
                     if(this.textIndex < text.length) {
                         this.textRenderer.setText(text[this.textIndex]);
                     } else {
-                        this.game.finishIntro();
+                        this.game.startNewGame();
                     }
                 }
             }
