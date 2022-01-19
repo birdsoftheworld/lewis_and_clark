@@ -138,7 +138,7 @@ class MeadowSituation extends Situation {
         if(choice.id === "hunt") {
             this.hunted = true;
             this.scene.vars.food = Math.min(100, this.scene.vars.food + 75);
-            this.scene.spendTime(this.camping, false);
+            this.scene.spendTime(this.camping, true);
             return new Result(false, ["You hunt the animals, gaining a surplus of food. +{food}"]);
         }
         if(choice.id === "continue") {
@@ -536,7 +536,7 @@ class MountainSituation extends Situation {
 
         if(choice.id === "hunt") {
             this.scene.vars.food = Math.min(100, this.scene.vars.food + 75);
-            this.scene.spendTime(false, false);
+            this.scene.spendTime(false, true);
             this.maze[this.currentX][this.currentY] = 1;
             return new Result(false, ["You hunted the animals."]);
         }
