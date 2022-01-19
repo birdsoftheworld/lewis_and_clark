@@ -70,7 +70,7 @@ class RiverSituation extends Situation {
     choose(choice) {
         if(choice.id === "ford") {
             this.scene.hurt(15, "river");
-            let str1 = "You ford your way across the river, sustaining damage along the way.";
+            let str1 = "You ford your way across the river.";
             if(Math.random() < 0.5) {
                 this.scene.vars.people--;
                 str1 += "\n_A member of your group was washed away in the strong currents. -1{person}_";
@@ -183,6 +183,22 @@ class MeadowSituation extends Situation {
     }
 }
 
+class Tradeable {
+    constructor(cost, name, description, alreadyHas, buy) {
+        this.cost = cost;
+        this.name = name;
+        this.description = description;
+        this.alreadyHas = alreadyHas;
+        this.buy = buy;
+    }
+}
+
+let allTradeables = [
+    new Tradeable(1, "boat", "Allows you to cross a river safely", s => s.vars.boat, s => { s.vars.boat = true }),
+    new Tradeable(1, "food", "{food}", s => false, s => { s.vars.food = Math.min(100, s.vars.food + 75) }),
+    new Tradeable(2, "guide", "Allows safer travel through mountains", s => s.vars.guide, s => { s.vars.guide = true }),
+    new Tradeable(4, "horses", "Use less food", s => s.vars.horses, s => { s.vars.horses = true })
+];
 class NativeSettlementSituation extends Situation {
     constructor(scene) {
         super(scene);
@@ -218,7 +234,33 @@ class NativeSettlementSituation extends Situation {
             return [ "You come out of the fight as the victor. You decide not to risk further conflict, and continue." ];
         } else if(this.stage === "camp") {
             return [ "You are in the native settlement." ];
+        } else if(this.stage === "trade") {
+            return [ "You are trading with the people in the settlement." ];
         }
+    }
+
+    getTradingChoices() {
+        if(this.tradingChoices === undefined) {
+            let tradeables = allTradeables.filter(t => !t.alreadyHas(this.scene));
+            this.tradingChoices = [];
+            for(let i = 0; i < 2; i++) {
+                if(tradeables.length <= 0) {
+                    break;
+                }
+                let index = Math.floor(Math.random() * this.tradingChoices.length);
+                this.tradingChoices.push(tradeables[index]);
+                tradeables.splice(index, 1);
+            }
+        }
+
+        let choices = [];
+        for(let i = 0; i < this.tradingChoices.length; i++) {
+            let tradeable = this.tradingChoices[i];
+            choices.push(new Choice(tradeable.name, `${Util.capitalizeFirstLetter(tradeable.name)}\n(${tradeable.description})\n${tradeable.cost}x{bead}`));
+        }
+        choices.push(new Choice("back", "Go back"));
+
+        return choices;
     }
 
     getMeetingChoices() {
@@ -232,7 +274,8 @@ class NativeSettlementSituation extends Situation {
     getCampChoices() {
         let choices = [
             new Choice("camp_continue", "Leave"),
-            new Choice("wait", "Wait\n{time}")
+            new Choice("wait", "Wait\n{time}"),
+            new Choice("trade", "Trade")
         ];
 
         if(this.scene.vars.health < 100) {
@@ -252,6 +295,8 @@ class NativeSettlementSituation extends Situation {
                 return [ new Choice("attack_leave", "Leave") ];
             case "camp":
                 return this.getCampChoices();
+            case "trade":
+                return this.getTradingChoices();
         }
     }
 
@@ -311,6 +356,12 @@ class NativeSettlementSituation extends Situation {
             `They introduce themselves, and generously invite you to stay within their settlement.`
         ];
 
+        let amount = Math.floor(Math.random() * 3);
+        if(amount > 0) {
+            this.scene.vars.beads += amount;
+            text.push(`As a sign of kindness, they also give you ${amount} bead${amount === 1 ? "" : "s"}. +{bead}`);
+        }
+
         return new Result(false, text);
     }
 
@@ -355,6 +406,22 @@ class NativeSettlementSituation extends Situation {
             case "wait":
                 this.scene.spendTime(true, true);
                 return new Result(false, ["You wait."]);
+            case "trade":
+                this.stage = "trade";
+                return new Result(false, ["You ask if you can trade for goods. Somebody speaks up, and allows you to barter for their items."]);
+            case "back":
+                this.stage = "camp";
+                return new Result(false, ["You stop bartering with the natives."]);
+        }
+
+        let tradeable = allTradeables.find(t => t.name === choice.id);
+        if(this.scene.vars.beads >= tradeable.cost) {
+            this.scene.vars.beads -= tradeable.cost;
+            tradeable.buy(this.scene);
+            this.tradingChoices.splice(this.tradingChoices.indexOf(tradeable), 1);
+            return new Result(false, [`You bought the ${tradeable.name} for ${tradeable.cost}{bead}.`]);
+        } else {
+            return new Result(false, ["You don't have enough beads to trade for that item."]);
         }
     }
 }
@@ -481,7 +548,7 @@ class MountainSituation extends Situation {
 
         for (let i = 0; i < directions.length; i++) {
             const element = directions[i];
-            if(element) {
+            if(element !== -1) {
                 let d = ["north", "east", "south", "west"][i];
                 choices.push(new Choice(d, `Go ${Util.capitalizeFirstLetter(d)}\n{${d}}{time}`));
             }
@@ -498,13 +565,13 @@ class MountainSituation extends Situation {
     }
 
     getDirections() {
-        let dirs = [false, false, false, false];
+        let dirs = [-1, -1, -1, -1];
         for (let i = 0; i < directions.length; i++) {
             const direction = directions[i];
             let rx = this.currentX + direction[0];
             let ry = this.currentY + direction[1];
-            if(this.inBounds(rx, ry) && this.maze[rx][ry] !== -1) {
-                dirs[i] = true;
+            if(this.inBounds(rx, ry)) {
+                dirs[i] = this.maze[rx][ry];
             }
         }
         return dirs;
@@ -527,11 +594,17 @@ class MountainSituation extends Situation {
         str1 += "\nThe directions you can go from here are: ";
         for (let i = 0; i < dirs.length; i++) {
             const element = dirs[i];
-            if(element) {
+            if(element !== -1) {
                 if(count !== 0) {
                     str1 += ", ";
                 }
+                if(element === 3 && this.scene.vars.guide) {
+                    str1 += "*";
+                }
                 str1 += ["north", "east", "south", "west"][i];
+                if(element === 3 && this.scene.vars.guide) {
+                    str1 += "*";
+                }
                 count++;
             }
         }

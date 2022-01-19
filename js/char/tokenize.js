@@ -15,6 +15,7 @@ icons.set("north", new Icon(iconsImg, 48, 0, 8, 8, 1));
 icons.set("east", new Icon(iconsImg, 56, 0, 8, 8, 1));
 icons.set("south", new Icon(iconsImg, 64, 0, 8, 8, 1));
 icons.set("west", new Icon(iconsImg, 72, 0, 8, 8, 1));
+icons.set("bead", new Icon(iconsImg, 80, 0, 8, 8, 1));
 
 function tokenize(text) {
     let tokens = [];

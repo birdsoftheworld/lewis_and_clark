@@ -34,7 +34,10 @@ class MainScene {
             food: 100,
             health: 100,
             boat: true,
+            horses: false,
+            guide: false,
             magicKarma: 10,
+            beads: 3,
             areaClears: 0,
             timeSpent: 0,
             season: 0,
@@ -114,11 +117,15 @@ class MainScene {
     }
 
     spendTime(safeFromCold, safeFromHunger) {
-        this.timeSpent++;
+        this.vars.timeSpent++;
         let str = "Time passes. ";
 
         if(!safeFromHunger) {
-            this.vars.food = Math.max(0, this.vars.food - (100/6));
+            let turnsToRunOutOfFood = 6;
+            if(this.vars.horses) {
+                turnsToRunOutOfFood = 10;
+            }
+            this.vars.food = Math.max(0, this.vars.food - (100/turnsToRunOutOfFood));
         }
 
         if(this.vars.season === 3 && !safeFromCold) {
@@ -175,6 +182,12 @@ class MainScene {
         context.fillStyle = "#9c9289";
         context.font = "60px moderndos";
         context.fillText(this.vars.people, unitSize * 3.5, height - unitSize);
+
+        // bead count
+        context.drawImage(this.game.resources.icons, 80, 0, 8, 8, unitSize, height - unitSize * 5, unitSize * 2, iconSize * 2);
+        context.fillStyle = "#e76000";
+        context.font = "60px moderndos";
+        context.fillText(this.vars.beads, unitSize * 3.5, height - unitSize * 3);
 
         // bars
         context.drawImage(this.game.resources.icons, 8, 0, 8, 8, unitSize * 7, height - unitSize * 3, unitSize * 2, iconSize * 2);
