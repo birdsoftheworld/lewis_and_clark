@@ -159,7 +159,7 @@ class MainScene {
     hurt(amount, source) {
         this.vars.health -= amount;
         if(this.vars.health <= 0) {
-            this.health = 0;
+            this.vars.health = 0;
             this.game.gameOver(this.vars, source);
         }
     }
