@@ -40,8 +40,10 @@ class Game {
         });
     }
 
-    youWin() {
-
+    youWin(stats) {
+        this.fadeToBlack(60, () => {
+            this.scene = new WinScene(this, stats);
+        });
     }
 
     update() {

@@ -36,6 +36,7 @@ class MainScene {
             boat: true,
             magicKarma: 10,
             areaClears: 0,
+            timeSpent: 0,
             season: 0,
             day: 0,
             year: 0
@@ -93,7 +94,7 @@ class MainScene {
             this.addTexts(["In the distance, you can see mountains."]);
         }
         if(this.vars.areaClears >= 11) {
-            this.game.youWin();
+            this.game.youWin(this.vars);
         }
     }
 
@@ -113,6 +114,7 @@ class MainScene {
     }
 
     spendTime(safeFromCold, safeFromHunger) {
+        this.timeSpent++;
         let str = "Time passes. ";
 
         if(!safeFromHunger) {
