@@ -121,14 +121,13 @@ class MeadowSituation extends Situation {
     }
 
     choose(choice) {
-        if(choice.id === "wait" || choice.id === "heal") {
-            this.scene.spendTime(this.camping, false);
-        }
         if(choice.id === "heal") {
             this.scene.vars.health = Math.min(100, this.scene.vars.health + 30);
+            this.scene.spendTime(this.camping, false);
             return new Result(false, ["You spend time healing those in poor condition."]);
         }
         if(choice.id === "wait") {
+            this.scene.spendTime(this.camping, false);
             return new Result(false, ["You wait in your camp."]);
         }
         if(choice.id === "camp") {
