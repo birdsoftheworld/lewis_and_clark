@@ -246,7 +246,7 @@ class NativeSettlementSituation extends Situation {
                 if(tradeables.length <= 0) {
                     break;
                 }
-                let index = Math.floor(Math.random() * this.tradingChoices.length);
+                let index = Math.floor(Math.random() * tradeables.length);
                 this.tradingChoices.push(tradeables[index]);
                 tradeables.splice(index, 1);
             }
